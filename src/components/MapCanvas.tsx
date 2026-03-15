@@ -10,6 +10,7 @@ interface MapCanvasProps {
   pois?: Poi[]
   onAddPoi?: (lng: number, lat: number) => void
   onPoiClick?: (poi: Poi) => void
+  onSettingsClick?: () => void
   isPicking?: boolean
   onPickConfirm?: (lng: number, lat: number) => void
   onPickCancel?: () => void
@@ -19,6 +20,7 @@ export function MapCanvas({
   pois = [], 
   onAddPoi, 
   onPoiClick, 
+  onSettingsClick,
   isPicking, 
   onPickConfirm, 
   onPickCancel 
@@ -142,7 +144,7 @@ export function MapCanvas({
               }}
               onFocus={() => setIsSearchOpen(true)}
             />
-            <div className="avatar-btn" id="avatar-btn">
+            <div className="avatar-btn" id="avatar-btn" onClick={onSettingsClick}>
               <span>G</span>
             </div>
           </div>

@@ -8,6 +8,7 @@ import { poiService } from './lib/poiService'
 import { BottomSheet } from './components/BottomSheet'
 import { PoiForm } from './components/PoiForm'
 import { PoiDetail } from './components/PoiDetail'
+import { SettingsForm } from './components/SettingsForm' // Added import
 import type { Poi } from './lib/database.types'
 import './index.css'
 
@@ -18,6 +19,9 @@ function App() {
   const [addingPos, setAddingPos] = useState<{ lng: number; lat: number } | null>(null)
   // 点击已有点位时的查看状态
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null)
+
+  // 是否显示设置界面
+  const [showSettings, setShowSettings] = useState(false) // Added state
 
   // 是否正在地图上重选坐标
   const [isPickingLocation, setIsPickingLocation] = useState(false)
@@ -63,6 +67,7 @@ function App() {
   const closeBottomSheet = () => {
     setAddingPos(null)
     setSelectedPoi(null)
+    setShowSettings(false)
   }
 
   // 调用地图导航 (Google Maps 或高德 Web URL，如果在移动端可以用 tauri-plugin-opener 打开具体 app 的 scheme)
@@ -77,6 +82,7 @@ function App() {
         pois={pois} 
         onAddPoi={handleAddPoi} 
         onPoiClick={handlePoiClick} 
+        onSettingsClick={() => setShowSettings(true)}
         isPicking={isPickingLocation}
         onPickConfirm={(lng, lat) => {
           setAddingPos({ lng, lat })
@@ -88,7 +94,7 @@ function App() {
       {/* 底部滑块，可能是新增，也可能是展示详情 */}
       {/* 若处于重选坐标模式，则视觉上暂时隐藏底窗（但不卸载组件保留状态） */}
       <div style={{ display: isPickingLocation ? 'none' : 'block' }}>
-        <BottomSheet isOpen={!!addingPos || !!selectedPoi} onClose={closeBottomSheet}>
+        <BottomSheet isOpen={!!addingPos || !!selectedPoi || showSettings} onClose={closeBottomSheet}>
           {addingPos && (
             <PoiForm 
               initialLng={addingPos.lng} 
@@ -103,6 +109,9 @@ function App() {
                 onClose={closeBottomSheet}
                 onNavigate={handleNavigate}
             />
+          )}
+          {showSettings && (
+            <SettingsForm onClose={closeBottomSheet} />
           )}
         </BottomSheet>
       </div>

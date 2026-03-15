@@ -1,5 +1,6 @@
+import { invoke } from '@tauri-apps/api/core'
 import { supabase } from './supabase'
-import type { Database, Poi } from './database.types'
+import type { Database, Poi, UserSettings } from './database.types'
 
 type PoiRow = Database['public']['Tables']['pois']['Row']
 type PoiInsert = Database['public']['Tables']['pois']['Insert']
@@ -68,6 +69,7 @@ export const poiService = {
       location: `POINT(${params.lng} ${params.lat})`, // 自动隐式转换为 PostGIS Geography
       category: params.category || null,
       notes: params.notes || null,
+      img_urls: params.imgUrls || [],
       sync_status: 'synced',
     } as any
 
@@ -83,6 +85,61 @@ export const poiService = {
 
   async deletePoi(id: string) {
     const { error } = await supabase.from('pois').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  // ── 图片上传 (Tauri Rust Proxy) ───────────────────────────
+  async uploadImage(file: File, apiKey: string): Promise<string> {
+    const buffer = await file.arrayBuffer()
+    const bytes = new Uint8Array(buffer)
+    
+    if (typeof invoke !== 'function') {
+      throw new Error('Tauri "invoke" is not available. Please ensure you are running inside the Tauri App, not a web browser.')
+    }
+
+    const result = await invoke<{ url: string }>('upload_image', {
+      imageBytes: Array.from(bytes),
+      apiKey: apiKey,
+      maxWidth: 1200,
+    })
+    
+    return result.url
+  },
+
+  // ── 用户设置 ──────────────────────────────────────────────
+  async getSettings(): Promise<UserSettings | null> {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (error && error.code !== 'PGRST116') throw error
+    
+    if (!data) return null
+    return {
+      userId: data.user_id,
+      imgbbApiKey: data.imgbb_api_key,
+      preferences: data.preferences as Record<string, any>,
+      updatedAt: data.updated_at,
+    }
+  },
+
+  async updateSettings(apiKey: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not logged in')
+
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: user.id,
+        imgbb_api_key: apiKey,
+        updated_at: new Date().toISOString(),
+      })
+
     if (error) throw error
   }
 }

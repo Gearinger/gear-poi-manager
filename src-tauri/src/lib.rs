@@ -1,6 +1,7 @@
 mod mbtiles;
 mod tile_downloader;
 mod commands;
+mod image_processor;
 
 use std::sync::Arc;
 use tauri::{
@@ -48,6 +49,8 @@ pub fn run() {
         // ── 暴露给前端的 Commands ────────────────────────────
         .invoke_handler(tauri::generate_handler![
             greet,
+            commands::upload_image,
+            commands::get_ip_location,
             estimate_tile_download,
             start_tile_download,
             get_cache_stats,
@@ -91,7 +94,8 @@ fn handle_map_data_request<R: tauri::Runtime>(
 
     // 2. Cache Miss ── 同步 HTTP 请求（协议处理器是同步的，使用 tokio block_in_place）
     let url = format!(
-        "https://tiles.openfreemap.org/planet/{z}/{x}/{y}"
+        "https://tiles.openfreemap.org/planet/{}/{}/{}",
+        z, x, y
     );
 
     let result = tokio::task::block_in_place(|| {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Camera, MapPin } from 'lucide-react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { poiService } from '../lib/poiService'
 import './PoiForm.css'
 
@@ -24,7 +24,14 @@ export function PoiForm({ initialLng, initialLat, onClose, onSuccess, onStartPic
   const [name, setName] = useState('')
   const [category, setCategory] = useState<string>('photo')
   const [notes, setNotes] = useState('')
-  const [images, setImages] = useState<string[]>([]) // 暂时存本地预览 URI
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+
+  // 获取用户设置（主要为了 API Key）
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: poiService.getSettings,
+  })
   
   // 提交 Mutate
   const { mutate, isPending } = useMutation({
@@ -44,29 +51,55 @@ export function PoiForm({ initialLng, initialLat, onClose, onSuccess, onStartPic
     const files = e.target.files
     if (!files || files.length === 0) return
     const file = files[0]
-    const url = URL.createObjectURL(file)
-    setImages(prev => [...prev, url])
-    // TODO: 异步上传 ImgBB
+    setPendingFile(file)
+    setImagePreview(URL.createObjectURL(file))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isUploading, setIsUploading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
-    mutate({
-      name,
-      lng: initialLng,
-      lat: initialLat,
-      category,
-      notes,
-      imgUrls: images // 等后续接入 ImgBB 返回真实高能 URL
-    })
+    setIsUploading(true)
+    try {
+      let finalUrls: string[] = []
+      
+      // 如果有待上传图片且配置了 API Key，则先上传
+      if (pendingFile && settings?.imgbbApiKey) {
+        try {
+          const remoteUrl = await poiService.uploadImage(pendingFile, settings.imgbbApiKey)
+          finalUrls = [remoteUrl]
+        } catch (uploadErr) {
+          console.error('Upload failed, falling back to no image:', uploadErr)
+          if (!confirm('图片上传失败，是否继续保存文字内容？')) {
+             setIsUploading(false)
+             return
+          }
+        }
+      } else if (pendingFile && !settings?.imgbbApiKey) {
+        alert('未配置 ImgBB API Key，图片将不会被保存。请在设置中配置。')
+      }
+
+      mutate({
+        name,
+        lng: initialLng,
+        lat: initialLat,
+        category,
+        notes,
+        imgUrls: finalUrls
+      })
+    } finally {
+      setIsUploading(false)
+    }
   }
+
+  const isSaving = isPending || isUploading
 
   return (
     <div className="poi-form-root">
       <div className="poi-form-header">
-        <button type="button" className="icon-btn-text" onClick={onClose} disabled={isPending}>
+        <button type="button" className="icon-btn-text" onClick={onClose} disabled={isSaving}>
           取消
         </button>
         <span className="poi-form-title">记录新地点</span>
@@ -74,17 +107,17 @@ export function PoiForm({ initialLng, initialLat, onClose, onSuccess, onStartPic
           type="button" 
           className="icon-btn-text icon-btn-text--primary" 
           onClick={handleSubmit} 
-          disabled={!name.trim() || isPending}
+          disabled={!name.trim() || isSaving}
         >
-          {isPending ? '保存中...' : '保存'}
+          {isSaving ? '保存中...' : '保存'}
         </button>
       </div>
 
       <div className="poi-form-body">
         {/* 图片采集区 (W3C Capture) */}
         <label className="poi-image-picker" htmlFor="poi-camera-input">
-          {images.length > 0 ? (
-            <img src={images[0]} alt="预览" className="poi-image-preview" />
+          {imagePreview ? (
+            <img src={imagePreview} alt="预览" className="poi-image-preview" />
           ) : (
             <div className="poi-image-picker-placeholder">
               <Camera size={28} />
@@ -108,7 +141,7 @@ export function PoiForm({ initialLng, initialLat, onClose, onSuccess, onStartPic
             placeholder="地点名称（必填）"
             value={name}
             onChange={e => setName(e.target.value)}
-            disabled={isPending}
+            disabled={isSaving}
             autoFocus
           />
         </div>
@@ -121,6 +154,7 @@ export function PoiForm({ initialLng, initialLat, onClose, onSuccess, onStartPic
                 type="button"
                 className={`poi-chip ${category === c.id ? 'poi-chip--active' : ''}`}
                 onClick={() => setCategory(c.id)}
+                disabled={isSaving}
               >
                 {c.emoji} {c.label}
               </button>
@@ -135,7 +169,7 @@ export function PoiForm({ initialLng, initialLat, onClose, onSuccess, onStartPic
             rows={3}
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            disabled={isPending}
+            disabled={isSaving}
           />
         </div>
 

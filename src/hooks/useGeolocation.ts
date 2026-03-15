@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import {
   getCurrentPosition,
   checkPermissions,
@@ -50,17 +51,18 @@ export function useGeolocation(): UseGeolocationReturn {
       } catch (nativeErr) {
         console.warn('[Geolocation] 原生定位失败（可能无硬件或系统拦截），尝试基于 IP 的粗略定位兜底:', nativeErr)
         
-        // 3. 原生失败后，托底方案：利用 IP API 获取近似位置
-        const res = await fetch('https://ipapi.co/json/')
-        const data = await res.json()
-        if (data && data.latitude && data.longitude) {
-          result = {
-            lng: parseFloat(data.longitude),
-            lat: parseFloat(data.latitude),
+        // 3. 原生失败后，托底方案：通过 Tauri Rust Proxy 获取近似位置 (绕过 CORS)
+        try {
+          const data = await invoke<{ longitude: number; latitude: number }>('get_ip_location')
+          if (data && data.latitude && data.longitude) {
+            result = {
+              lng: data.longitude,
+              lat: data.latitude,
+            }
+            console.log('[Geolocation] 成功通过 Rust Proxy 获取 IP 兜底位置:', result)
           }
-          console.log('[Geolocation] 成功通过 IP 获取兜底位置:', result)
-        } else {
-          throw new Error('原生定位和 IP 粗略定位均失败')
+        } catch (proxyErr) {
+          throw new Error('原生定位和 IP 粗略定位均失败: ' + proxyErr)
         }
       }
 

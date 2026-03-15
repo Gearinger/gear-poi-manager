@@ -1,0 +1,58 @@
+﻿cargo :     Checking tauri-app v0.1.0 (E:\project\ge
+ar-poi-manager\src-tauri)
+所在位置 行:1 字符: 1
++ cargo check --no-default-features 2>&1 | Out-File 
+-FilePath check_res ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Ch 
+   ecking ta...ager\src-tauri):String) [], RemoteE  
+  xception
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: unused import: `Deserialize`
+ --> src\image_processor.rs:2:13
+  |
+2 | use serde::{Deserialize, Serialize};
+  |             ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn
+(unused)]`) on by default
+
+error[E0599]: no method named `json` found for struc
+t `reqwest::Response` in the current scope
+  --> src\commands.rs:42:20
+   |
+42 |     let json = res.json::<serde_json::Value>()
+   |                    ^^^^ method not found in `re
+qwest::Response`
+
+error[E0282]: type annotations needed
+  --> src\commands.rs:42:16
+   |
+42 |       let json = res.json::<serde_json::Value>(
+)
+   |  ________________^
+43 | |         .await
+   | |______________^ cannot infer type
+
+error[E0282]: type annotations needed
+  --> src\commands.rs:44:19
+   |
+44 |         .map_err(|e| e.to_string())?;
+   |                   ^  - type must be known at th
+is point
+   |
+help: consider giving this closure parameter an expl
+icit type
+   |
+44 |         .map_err(|e: /* Type */| e.to_string())
+?;
+   |                    ++++++++++++
+
+Some errors have detailed explanations: E0282, E0599
+.
+For more information about an error, try `rustc --ex
+plain E0282`.
+warning: `tauri-app` (lib) generated 1 warning
+error: could not compile `tauri-app` (lib) due to 3 
+previous errors; 1 warning emitted

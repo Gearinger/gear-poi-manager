@@ -29,8 +29,11 @@ tauri-plugin-http = "2"
 # SQLite (MBTiles 读写)
 rusqlite = { version = "0.32", features = ["bundled"] }
 
-# 异步 HTTP 客户端（瓦片下载）
-reqwest = { version = "0.12", features = ["rustls-tls"], default-features = false }
+# 异步 HTTP 客户端（瓦片下载 + 图床上传）
+reqwest = { version = "0.12", features = ["rustls-tls", "multipart", "json"], default-features = false }
+
+# 图片处理与压缩 (WebP)
+image = "0.25"
 
 # 异步运行时
 tokio = { version = "1", features = ["full"] }

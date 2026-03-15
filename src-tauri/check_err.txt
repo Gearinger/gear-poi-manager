@@ -1,0 +1,10 @@
+    Updating crates.io index
+error: failed to select a version for `image`.
+    ... required by package `tauri-app v0.1.0 (E:\project\gear-poi-manager\src-tauri)`
+versions that meet the requirements `^0.25` are: 0.25.10, 0.25.9, 0.25.8, 0.25.6, 0.25.5, 0.25.4, 0.25.2, 0.25.1, 0.25.0
+
+package `tauri-app` depends on `image` with feature `webp-encoder` but `image` does not have that feature.
+ available features: avif, avif-native, benchmarks, bmp, dds, default, default-formats, exr, ff, gif, hdr, ico, jpeg, png, pnm, qoi, rayon, tga, tiff, webp
+
+
+failed to select a version for `image` which could resolve this conflict

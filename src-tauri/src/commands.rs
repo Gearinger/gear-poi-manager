@@ -4,6 +4,7 @@ use tauri::{Emitter, State};
 
 use crate::mbtiles::MbtilesDb;
 use crate::tile_downloader::{download_tiles, estimate_download_bytes, tiles_in_bounds};
+use crate::image_processor::{compress_and_upload, UploadResult};
 
 pub type DbState = Arc<MbtilesDb>;
 
@@ -13,6 +14,40 @@ pub fn get_tile_bytes(db: &MbtilesDb, z: u32, x: u32, y: u32) -> Option<Vec<u8>>
 }
 
 // ── Tauri Commands ─────────────────────────────────────────
+
+#[tauri::command]
+pub async fn upload_image(
+    image_bytes: Vec<u8>,
+    api_key: String,
+    max_width: u32,
+) -> Result<UploadResult, String> {
+    compress_and_upload(&image_bytes, &api_key, max_width).await
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct IpLocation {
+    pub longitude: f64,
+    pub latitude: f64,
+}
+
+#[tauri::command]
+pub async fn get_ip_location() -> Result<IpLocation, String> {
+    let client = reqwest::Client::new();
+    let res = client
+        .get("https://ipapi.co/json/")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let json = res.json::<serde_json::Value>()
+        .await
+        .map_err(|e| e.to_string())?;
+    
+    let longitude = json["longitude"].as_f64().ok_or("No longitude in IP response")?;
+    let latitude = json["latitude"].as_f64().ok_or("No latitude in IP response")?;
+
+    Ok(IpLocation { longitude, latitude })
+}
 
 #[derive(Serialize)]
 pub struct EstimateResult {
