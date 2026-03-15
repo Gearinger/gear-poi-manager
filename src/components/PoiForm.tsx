@@ -16,9 +16,10 @@ interface PoiFormProps {
   initialLat: number
   onClose: () => void
   onSuccess?: () => void
+  onStartPicking?: () => void
 }
 
-export function PoiForm({ initialLng, initialLat, onClose, onSuccess }: PoiFormProps) {
+export function PoiForm({ initialLng, initialLat, onClose, onSuccess, onStartPicking }: PoiFormProps) {
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [category, setCategory] = useState<string>('photo')
@@ -141,6 +142,11 @@ export function PoiForm({ initialLng, initialLat, onClose, onSuccess }: PoiFormP
         <div className="poi-coord">
           <MapPin size={14} />
           <span>{initialLng.toFixed(6)}, {initialLat.toFixed(6)}</span>
+          {onStartPicking && (
+            <button type="button" className="poi-coord-btn" onClick={onStartPicking}>
+              在地图上选点
+            </button>
+          )}
         </div>
       </div>
     </div>

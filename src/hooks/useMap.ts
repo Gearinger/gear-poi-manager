@@ -17,6 +17,7 @@ interface UseMapReturn {
   addMarker: (id: string, lng: number, lat: number, color?: string, onClick?: () => void) => void
   removeMarker: (id: string) => void
   resetNorth: () => void
+  getMarkerIds: () => string[]
 }
 
 // 默认使用 OpenFreeMap Bright 样式（免费在线 OSM 矢量底图）
@@ -123,7 +124,9 @@ export function useMap({
     map.current?.easeTo({ bearing: 0, pitch: 0, duration: 500 })
   }, [])
 
-  return { map, flyTo, addMarker, removeMarker, resetNorth }
+  const getMarkerIds = useCallback(() => Array.from(markers.current.keys()), [])
+
+  return { map, flyTo, addMarker, removeMarker, resetNorth, getMarkerIds }
 }
 
 // ── 离线底图 Style 构建 ───────────────────────────────────

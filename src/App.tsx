@@ -19,6 +19,9 @@ function App() {
   // 点击已有点位时的查看状态
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null)
 
+  // 是否正在地图上重选坐标
+  const [isPickingLocation, setIsPickingLocation] = useState(false)
+
   // 获取 POI 列表数据（依赖于用户登录）
   const { data: pois = [] } = useQuery({
     queryKey: ['pois', auth.user?.id],
@@ -70,25 +73,39 @@ function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <MapCanvas pois={pois} onAddPoi={handleAddPoi} onPoiClick={handlePoiClick} />
+      <MapCanvas 
+        pois={pois} 
+        onAddPoi={handleAddPoi} 
+        onPoiClick={handlePoiClick} 
+        isPicking={isPickingLocation}
+        onPickConfirm={(lng, lat) => {
+          setAddingPos({ lng, lat })
+          setIsPickingLocation(false)
+        }}
+        onPickCancel={() => setIsPickingLocation(false)}
+      />
       
       {/* 底部滑块，可能是新增，也可能是展示详情 */}
-      <BottomSheet isOpen={!!addingPos || !!selectedPoi} onClose={closeBottomSheet}>
-        {addingPos && (
-          <PoiForm 
-            initialLng={addingPos.lng} 
-            initialLat={addingPos.lat} 
-            onClose={closeBottomSheet} 
-          />
-        )}
-        {selectedPoi && (
-           <PoiDetail
-              poi={selectedPoi}
-              onClose={closeBottomSheet}
-              onNavigate={handleNavigate}
-           />
-        )}
-      </BottomSheet>
+      {/* 若处于重选坐标模式，则视觉上暂时隐藏底窗（但不卸载组件保留状态） */}
+      <div style={{ display: isPickingLocation ? 'none' : 'block' }}>
+        <BottomSheet isOpen={!!addingPos || !!selectedPoi} onClose={closeBottomSheet}>
+          {addingPos && (
+            <PoiForm 
+              initialLng={addingPos.lng} 
+              initialLat={addingPos.lat} 
+              onClose={closeBottomSheet} 
+              onStartPicking={() => setIsPickingLocation(true)}
+            />
+          )}
+          {selectedPoi && (
+            <PoiDetail
+                poi={selectedPoi}
+                onClose={closeBottomSheet}
+                onNavigate={handleNavigate}
+            />
+          )}
+        </BottomSheet>
+      </div>
     </div>
   )
 }

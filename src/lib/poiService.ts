@@ -68,13 +68,12 @@ export const poiService = {
       location: `POINT(${params.lng} ${params.lat})`, // 自动隐式转换为 PostGIS Geography
       category: params.category || null,
       notes: params.notes || null,
-      img_urls: params.imgUrls || [],
       sync_status: 'synced',
-    }
+    } as any
 
     const { data, error } = await supabase
       .from('pois')
-      .insert(insertData)
+      .insert(insertData as any)
       .select()
       .single()
 
