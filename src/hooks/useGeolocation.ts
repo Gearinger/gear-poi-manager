@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import {
   getCurrentPosition,
+  checkPermissions,
+  requestPermissions,
   type Position,
 } from '@tauri-apps/plugin-geolocation'
 
@@ -20,18 +22,55 @@ export function useGeolocation(): UseGeolocationReturn {
     setIsLocating(true)
     setError(null)
     try {
-      const pos: Position = await getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      })
-      const result = {
-        lng: pos.coords.longitude,
-        lat: pos.coords.latitude,
+      // 1. 尝试检查并请求权限（桌面端等平台可能不支持权限API并抛出异常，忽略之）
+      try {
+        let perm = await checkPermissions()
+        if (perm.location !== 'granted') {
+          perm = await requestPermissions(['location', 'coarseLocation'])
+          if (perm.location !== 'granted') {
+            console.warn('[Geolocation] 定位权限被拒绝，可能导致原生定位失败')
+          }
+        }
+      } catch (permErr) {
+        console.warn('[Geolocation] 权限检查API不可用，直接尝试获取位置:', permErr)
       }
-      setPosition(result)
-      return result
+
+      // 2. 尝试原生设备定位
+      let result: { lng: number; lat: number } | null = null
+      try {
+        const pos: Position = await getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        })
+        result = {
+          lng: pos.coords.longitude,
+          lat: pos.coords.latitude,
+        }
+      } catch (nativeErr) {
+        console.warn('[Geolocation] 原生定位失败（可能无硬件或系统拦截），尝试基于 IP 的粗略定位兜底:', nativeErr)
+        
+        // 3. 原生失败后，托底方案：利用 IP API 获取近似位置
+        const res = await fetch('https://ipapi.co/json/')
+        const data = await res.json()
+        if (data && data.latitude && data.longitude) {
+          result = {
+            lng: parseFloat(data.longitude),
+            lat: parseFloat(data.latitude),
+          }
+          console.log('[Geolocation] 成功通过 IP 获取兜底位置:', result)
+        } else {
+          throw new Error('原生定位和 IP 粗略定位均失败')
+        }
+      }
+
+      if (result) {
+        setPosition(result)
+        return result
+      }
+      return null
     } catch (err) {
+      console.error('[Geolocation Error]:', err)
       const msg = err instanceof Error ? err.message : '无法获取位置，请检查定位权限'
       setError(msg)
       return null

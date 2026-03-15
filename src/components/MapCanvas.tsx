@@ -3,16 +3,38 @@ import maplibregl from 'maplibre-gl'
 import { Compass, Layers, LocateFixed, Plus } from 'lucide-react'
 import { useMap } from '../hooks/useMap'
 import { useGeolocation } from '../hooks/useGeolocation'
+import type { Poi } from '../lib/database.types'
 import './MapCanvas.css'
 
 interface MapCanvasProps {
+  pois?: Poi[]
   onAddPoi?: (lng: number, lat: number) => void
+  onPoiClick?: (poi: Poi) => void
 }
 
-export function MapCanvas({ onAddPoi }: MapCanvasProps) {
+export function MapCanvas({ pois = [], onAddPoi, onPoiClick }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { map, flyTo, resetNorth } = useMap({ container: containerRef })
+  const { map, flyTo, addMarker, resetNorth } = useMap({ container: containerRef })
   const { position, isLocating, locate } = useGeolocation()
+
+  // 同步渲染 POI
+  useEffect(() => {
+    if (!map.current) return
+    
+    // 简单粗暴先清理，实际场景可能会做 diff 优化
+    // 这里依赖 useMap 的 `addMarker` 自动覆盖同 id marker，我们直接遍历添加即可
+    pois.forEach(poi => {
+      // 颜色根据 category 返回个伪随机或固定色
+      const color = poi.category === 'food' ? '#F59E0B' 
+                  : poi.category === 'photo' ? '#10B981'
+                  : poi.category === 'todo' ? '#EF4444' 
+                  : '#3B82F6'
+
+      addMarker(poi.id, poi.lng, poi.lat, color, () => {
+        onPoiClick?.(poi)
+      })
+    })
+  }, [pois, addMarker, onPoiClick, map])
 
   // 首次定位成功后，跳转地图到用户位置
   useEffect(() => {
@@ -23,8 +45,15 @@ export function MapCanvas({ onAddPoi }: MapCanvasProps) {
 
   // 定位按钮处理
   const handleLocate = async () => {
+    if (position) {
+      flyTo(position.lng, position.lat, 16)
+    }
     const pos = await locate()
-    if (pos) flyTo(pos.lng, pos.lat, 16)
+    if (pos) {
+      flyTo(pos.lng, pos.lat, 16)
+    } else {
+      alert('获取真实位置失败，请检查系统定位权限和设备 GPS 开关。')
+    }
   }
 
   // 长按地图添加 POI（桌面用 dblclick 模拟）

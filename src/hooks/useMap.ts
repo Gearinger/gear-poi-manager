@@ -14,7 +14,7 @@ interface UseMapOptions {
 interface UseMapReturn {
   map: React.MutableRefObject<maplibregl.Map | null>
   flyTo: (lng: number, lat: number, zoom?: number) => void
-  addMarker: (id: string, lng: number, lat: number, color?: string) => void
+  addMarker: (id: string, lng: number, lat: number, color?: string, onClick?: () => void) => void
   removeMarker: (id: string) => void
   resetNorth: () => void
 }
@@ -69,25 +69,41 @@ export function useMap({
   }, [])
 
   const addMarker = useCallback(
-    (id: string, lng: number, lat: number, color = '#3B82F6') => {
+    (id: string, lng: number, lat: number, color = '#3B82F6', onClick?: () => void) => {
       if (!map.current) return
       // 移除已有同 id 的 marker
       markers.current.get(id)?.remove()
 
       const el = document.createElement('div')
-      el.className = 'poi-marker'
-      el.style.cssText = `
-        width: 28px; height: 34px;
-        background: ${color};
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        border: 2px solid #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      el.className = 'poi-marker-container'
+      el.style.width = '32px'
+      el.style.height = '32px'
+      
+      const inner = document.createElement('div')
+      const svgColor = encodeURIComponent(color)
+      const svgIcon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${svgColor}" stroke="%23ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 15.007 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3" fill="%23ffffff"/></svg>`
+      
+      inner.style.cssText = `
+        width: 100%; height: 100%;
+        background-image: url('${svgIcon}');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center bottom;
         cursor: pointer;
-        transition: transform 200ms ease;
+        transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        transform-origin: bottom center;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
       `
-      el.onmouseenter = () => { el.style.transform = 'rotate(-45deg) scale(1.15)' }
-      el.onmouseleave = () => { el.style.transform = 'rotate(-45deg) scale(1)' }
+      el.appendChild(inner)
+
+      el.onmouseenter = () => { inner.style.transform = 'scale(1.2)' }
+      el.onmouseleave = () => { inner.style.transform = 'scale(1)' }
+      if (onClick) {
+        el.onclick = (e) => {
+          e.stopPropagation()
+          onClick()
+        }
+      }
 
       const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([lng, lat])

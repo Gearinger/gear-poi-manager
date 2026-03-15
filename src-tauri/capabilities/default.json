@@ -10,7 +10,6 @@
     "opener:default",
     "geolocation:default",
     "fs:default",
-    "http:default",
-    "camera:default"
+    "http:default"
   ]
 }

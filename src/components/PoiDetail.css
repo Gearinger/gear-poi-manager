@@ -1,0 +1,111 @@
+.poi-detail-root {
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+
+.poi-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.poi-detail-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.poi-detail-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.poi-detail-nav-btn:hover {
+  background: #BFDBFE;  /* a bit darker blue */
+}
+
+.poi-detail-images {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+}
+
+.poi-detail-images img {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.poi-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.poi-detail-tag {
+  background: var(--color-bg);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.poi-detail-notes {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background: #F9FAFB;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+}
+
+.poi-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+
+.poi-detail-del-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--color-danger);
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.poi-detail-del-btn:hover {
+  background: #FEF2F2;
+}
+
+.poi-detail-del-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
