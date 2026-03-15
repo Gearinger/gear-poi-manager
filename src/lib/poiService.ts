@@ -112,7 +112,7 @@ export const poiService = {
     if (!user) return null
 
     const { data, error } = await supabase
-      .from('user_settings')
+      .from('user_settings' as any)
       .select('*')
       .eq('user_id', user.id)
       .single()
@@ -120,11 +120,12 @@ export const poiService = {
     if (error && error.code !== 'PGRST116') throw error
     
     if (!data) return null
+    const row = data as any
     return {
-      userId: data.user_id,
-      imgbbApiKey: data.imgbb_api_key,
-      preferences: data.preferences as Record<string, any>,
-      updatedAt: data.updated_at,
+      userId: row.user_id,
+      imgbbApiKey: row.imgbb_api_key,
+      preferences: row.preferences as Record<string, any>,
+      updatedAt: row.updated_at,
     }
   },
 
@@ -133,12 +134,12 @@ export const poiService = {
     if (!user) throw new Error('Not logged in')
 
     const { error } = await supabase
-      .from('user_settings')
+      .from('user_settings' as any)
       .upsert({
         user_id: user.id,
         imgbb_api_key: apiKey,
         updated_at: new Date().toISOString(),
-      })
+      } as any)
 
     if (error) throw error
   }

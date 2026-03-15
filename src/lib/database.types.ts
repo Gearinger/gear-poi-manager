@@ -6,7 +6,7 @@ export type SyncStatus = 'synced' | 'pending' | 'failed'
 export interface Database {
   public: {
     Tables: {
-      pois: {
+      "pois": {
         Row: {
           id: string
           user_id: string
@@ -35,8 +35,8 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['pois']['Insert']>
-      }
-      user_settings: {
+      },
+      "user_settings": {
         Row: {
           user_id: string
           imgbb_api_key: string | null
@@ -51,7 +51,7 @@ export interface Database {
         }
         Update: Partial<Database['public']['Tables']['user_settings']['Insert']>
       }
-    }
+    },
     Functions: {
       pois_near_point: {
         Args: {
