@@ -58,7 +58,7 @@ jobs:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
       - name: install frontend dependencies
         run: bun install
-      - uses: tauri-apps/tauri-action@v2
+      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -111,14 +111,18 @@ jobs:
       # Android Build
       - name: build android
         if: matrix.target == 'android'
-        run: bun tauri android build
+        run: |
+          bun tauri android init --ci
+          bun tauri android build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # iOS Build
       - name: build ios
         if: matrix.target == 'ios'
-        run: bun tauri ios build --no-signing
+        run: |
+          bun tauri ios init --ci
+          bun tauri ios build -- --no-signing
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
