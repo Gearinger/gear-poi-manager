@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── CSS Reset & Globals ─────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Brand */
+  --color-primary:        #3B82F6;
+  --color-primary-dark:   #2563EB;
+  --color-primary-light:  #DBEAFE;
+
+  /* Semantic */
+  --color-success:        #10B981;
+  --color-danger:         #EF4444;
+  --color-warning:        #F59E0B;
+
+  /* Neutral */
+  --color-text-primary:   #111827;
+  --color-text-secondary: #6B7280;
+  --color-bg:             #F3F4F6;
+  --color-surface:        #FFFFFF;
+  --color-border:         #E5E7EB;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.08);
+  --shadow-fab: 0 8px 24px rgba(59,130,246,.40);
+
+  /* Transition */
+  --transition-fast:   120ms ease;
+  --transition-normal: 240ms ease;
+  --transition-slow:   380ms cubic-bezier(.34,1.56,.64,1);
+
+  /* Typography */
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── MapLibre baseline overrides ─────────────────────────── */
+.maplibregl-canvas-container,
+.maplibregl-canvas {
+  outline: none;
+}
+
+.maplibregl-ctrl-group {
+  display: none !important; /* 隐藏默认控件，使用自定义控件 */
+}
+
+/* ── Utility classes ─────────────────────────────────────── */
+.flex        { display: flex; }
+.flex-col    { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.gap-2       { gap: var(--space-2); }
+.gap-3       { gap: var(--space-3); }
+
+/* ── Icon Button (共用样式) ──────────────────────────────── */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  color: var(--color-text-primary);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.icon-btn:hover {
+  transform: scale(1.06);
+  box-shadow: var(--shadow-md);
+}
+
+.icon-btn:active {
+  transform: scale(0.96);
+}
+
+/* ── FAB (Floating Action Button) ───────────────────────── */
+.fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  border: none;
+  box-shadow: var(--shadow-fab);
+  cursor: pointer;
+  color: #fff;
+  transition: transform var(--transition-slow), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.fab:hover {
+  transform: scale(1.08);
+  background: var(--color-primary-dark);
+  box-shadow: 0 10px 28px rgba(59,130,246,.50);
+}
+
+.fab:active {
+  transform: scale(0.96);
+}
+
+/* ── Toast / Snackbar ───────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--color-text-primary);
+  color: #fff;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+  white-space: nowrap;
+  z-index: 9999;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

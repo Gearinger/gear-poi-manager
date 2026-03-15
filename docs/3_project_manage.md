@@ -3,10 +3,10 @@
 ## 1. 里程碑划分 (Milestones)
 
 ### 第一阶段：基础设施搭建 (MVP - Week 1-2)
-* [ ] 初始化 Tauri 2.0 项目 (React + TS + Rust)，**统一使用 Bun 完成依赖安装**。
-* [ ] Supabase 数据库表结构设计与 Auth 流程打通。
-* [ ] 集成 MapLibre GL JS 并实现基础在线地图显示。
-* [ ] 账号登录/注册页面实现。
+* [x] 初始化 Tauri 2.0 项目 (React + TS + Rust)，**统一使用 Bun 完成依赖安装**。
+* [x] Supabase 数据库表结构设计与 Auth 流程打通。
+* [x] 集成 MapLibre GL JS 并实现基础在线地图显示。
+* [x] 账号登录/注册页面实现。
 
 ### 第二阶段：离线能力与地理功能 (Week 3-4)
 * [ ] Rust 侧 `map-data://` 协议实现（瓦片读取与 HTTP 代理缓存）。
