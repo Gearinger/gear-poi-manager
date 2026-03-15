@@ -1,6 +1,3 @@
-
----
-
 # 🛠️ POI 随手记：技术架构与开发规范 (Technical Specification)
 
 ## 1. 系统架构图
