@@ -7,6 +7,7 @@
 * [x] Supabase 数据库表结构设计与 Auth 流程打通。
 * [x] 集成 MapLibre GL JS 并实现基础在线地图显示。
 * [x] 账号登录/注册页面实现。
+* [ ] **待办**：接入 Google OAuth 登录（Supabase + Deep Link 适配）。
 
 ### 第二阶段：离线能力与地理功能 (Week 3-4)
 * [x] Rust 侧 `map-data://` 协议实现（瓦片读取与 HTTP 代理缓存）。

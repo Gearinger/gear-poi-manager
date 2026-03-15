@@ -136,6 +136,7 @@ jobs:
             src-tauri/gen/android/app/build/outputs/bundle/release/*.aab
             src-tauri/gen/apple/build/Release-iphoneos/*.ipa
             src-tauri/gen/apple/build/Release-iphonesimulator/*.app
+          body: "Gear-POI 全平台发布产物"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
