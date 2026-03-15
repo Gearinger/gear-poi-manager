@@ -69,23 +69,28 @@ export function MapCanvas({
     })
   }, [pois, addMarker, removeMarker, getMarkerIds, onPoiClick, map])
 
-  // 首次定位成功后，跳转地图到用户位置
+  // 自动定位仅在组件挂载且 position 首次从 null 变为有效值时触发一次
+  const [hasInitialSynced, setHasInitialSynced] = useState(false)
   useEffect(() => {
-    if (position && map.current) {
+    if (position && map.current && !hasInitialSynced) {
       flyTo(position.lng, position.lat, 14)
+      setHasInitialSynced(true)
     }
-  }, [position, flyTo, map])
+  }, [position, map, flyTo, hasInitialSynced])
 
   // 定位按钮处理
   const handleLocate = async () => {
+    // 1. 如果当前已经有缓存位置，立刻先飞过去（即使坐标没变也能触发地图回弹）
     if (position) {
       flyTo(position.lng, position.lat, 16)
     }
-    const pos = await locate()
-    if (pos) {
-      flyTo(pos.lng, pos.lat, 16)
-    } else {
-      alert('获取真实位置失败，请检查系统定位权限和设备 GPS 开关。')
+
+    // 2. 触发新的定位逻辑
+    const freshPos = await locate()
+    
+    // 3. 定位完成后再次刷新位置（如果拿到了更准的 GPS）
+    if (freshPos) {
+      flyTo(freshPos.lng, freshPos.lat, 16)
     }
   }
 

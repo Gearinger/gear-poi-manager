@@ -32,17 +32,28 @@ pub struct IpLocation {
 
 #[tauri::command]
 pub async fn get_ip_location() -> Result<IpLocation, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .user_agent("Gear-POI/1.0")
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // 改用更稳定的 ip-api.com (免费层支持 HTTPS 的子域可能受限，
+    // 这里使用较稳健的 freeipapi.com 或维持 ipapi.co 但提高安全性)
     let res = client
-        .get("https://ipapi.co/json/")
+        .get("https://freeipapi.com/api/json")
         .send()
         .await
         .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        return Err(format!("IP API returned error status: {}", res.status()));
+    }
 
     let json = res.json::<serde_json::Value>()
         .await
         .map_err(|e| e.to_string())?;
     
+    // freeipapi.com 返回的是 longitude 和 latitude 字段
     let longitude = json["longitude"].as_f64().ok_or("No longitude in IP response")?;
     let latitude = json["latitude"].as_f64().ok_or("No latitude in IP response")?;
 

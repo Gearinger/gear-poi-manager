@@ -22,63 +22,81 @@ export function useGeolocation(): UseGeolocationReturn {
   const locate = useCallback(async () => {
     setIsLocating(true)
     setError(null)
-    try {
-      // 1. 尝试检查并请求权限（桌面端等平台可能不支持权限API并抛出异常，忽略之）
-      try {
-        let perm = await checkPermissions()
-        if (perm.location !== 'granted') {
-          perm = await requestPermissions(['location', 'coarseLocation'])
-          if (perm.location !== 'granted') {
-            console.warn('[Geolocation] 定位权限被拒绝，可能导致原生定位失败')
-          }
-        }
-      } catch (permErr) {
-        console.warn('[Geolocation] 权限检查API不可用，直接尝试获取位置:', permErr)
-      }
 
-      // 2. 尝试原生设备定位
-      let result: { lng: number; lat: number } | null = null
-      try {
-        const pos: Position = await getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        })
-        result = {
-          lng: pos.coords.longitude,
-          lat: pos.coords.latitude,
-        }
-      } catch (nativeErr) {
-        console.warn('[Geolocation] 原生定位失败（可能无硬件或系统拦截），尝试基于 IP 的粗略定位兜底:', nativeErr)
-        
-        // 3. 原生失败后，托底方案：通过 Tauri Rust Proxy 获取近似位置 (绕过 CORS)
-        try {
-          const data = await invoke<{ longitude: number; latitude: number }>('get_ip_location')
-          if (data && data.latitude && data.longitude) {
-            result = {
-              lng: data.longitude,
-              lat: data.latitude,
-            }
-            console.log('[Geolocation] 成功通过 Rust Proxy 获取 IP 兜底位置:', result)
-          }
-        } catch (proxyErr) {
-          throw new Error('原生定位和 IP 粗略定位均失败: ' + proxyErr)
-        }
-      }
+    // 环境检查
+    const isTauri = !!(window as any).__TAURI_INTERNALS__;
 
-      if (result) {
-        setPosition(result)
-        return result
+    let gpsResult: { lng: number; lat: number } | null = null
+
+    // 1. 定义 IP 定位任务 (快 - 仅在 Tauri 模式下通过 Rust 请求绕过跨域)
+    const getIpLocationTask = async () => {
+      if (!isTauri) return null;
+      try {
+        const data = await invoke<{ longitude: number; latitude: number }>('get_ip_location')
+        if (data && data.latitude && data.longitude) {
+          const res = { lng: data.longitude, lat: data.latitude }
+          if (!gpsResult) {
+            console.log('[Geolocation] 优先获取到 IP 位置:', res)
+            setPosition(res)
+          }
+          return res
+        }
+      } catch (e) {
+        console.warn('[Geolocation] IP 定位失败:', e)
       }
       return null
-    } catch (err) {
-      console.error('[Geolocation Error]:', err)
-      const msg = err instanceof Error ? err.message : '无法获取位置，请检查定位权限'
-      setError(msg)
-      return null
-    } finally {
-      setIsLocating(false)
     }
+
+    // 2. 定义 GPS/原生定位任务 (慢但准)
+    const getGpsLocationTask = async () => {
+      try {
+        // Tauri 环境下使用插件，浏览器环境下使用原生 navigator
+        if (isTauri) {
+          try {
+            let perm = await checkPermissions()
+            if (perm.location !== 'granted') {
+              await requestPermissions(['location', 'coarseLocation'])
+            }
+          } catch (e) { /* ignore */ }
+
+          const pos: Position = await getCurrentPosition({
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          })
+          gpsResult = { lng: pos.coords.longitude, lat: pos.coords.latitude }
+        } else {
+          // 浏览器标准 fallback
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+            })
+          })
+          gpsResult = { lng: pos.coords.longitude, lat: pos.coords.latitude }
+        }
+
+        if (gpsResult) {
+          console.log('[Geolocation] 成功获取高精度位置:', gpsResult)
+          setPosition(gpsResult)
+          return gpsResult
+        }
+      } catch (e) {
+        console.warn('[Geolocation] 原生/GPS 定位失败:', e)
+      }
+      return null
+    }
+
+    // 并发执行，IP 通常秒回
+    const results = await Promise.all([getIpLocationTask(), getGpsLocationTask()])
+    setIsLocating(false)
+
+    // 返回最后的最优结果
+    const finalPos = results[1] || results[0]
+    if (!finalPos) {
+      setError('无法获取您的位置信息')
+    }
+    return finalPos
   }, [])
 
   // 组件挂载时自动定位一次
